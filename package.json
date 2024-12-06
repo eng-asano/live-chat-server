@@ -2,19 +2,23 @@
   "name": "lambda-docker-compose-ts",
   "type": "module",
   "version": "1.0.0",
-  "main": "dist/app.js",
   "scripts": {
-    "build": "tsc",
+    "build-connect": "tsc src/connect.ts --noEmit && esbuild src/connect.ts --bundle --platform=node --target=es2020 --outfile=dist/connect/index.js",
+    "zip-connect": "zip connect.zip dist/connect/index.js -j",
+    "build-disconnect": "tsc src/disconnect.ts --noEmit && esbuild src/disconnect.ts --bundle --platform=node --target=es2020 --outfile=dist/disconnect/index.js",
+    "zip-disconnect": "zip disconnect.zip dist/disconnect/index.js -j",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "format": "prettier --write 'src/**/*.{ts,tsx,json,md}'"
   },
   "dependencies": {
-    "aws-lambda": "1.0.7"
+    "aws-sdk": "2.1692.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.146",
+    "@types/node": "22.10.1",
     "@typescript-eslint/eslint-plugin": "8.16.0",
     "@typescript-eslint/parser": "8.16.0",
+    "esbuild": "0.24.0",
     "eslint": "9.16.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.2.1",
