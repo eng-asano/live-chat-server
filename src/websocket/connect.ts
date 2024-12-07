@@ -1,34 +1,38 @@
 import { DynamoDB, ApiGatewayManagementApi } from 'aws-sdk'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 
-// DynamoDBクライアントの初期化
+// DynamoDB クライアントの初期化
 const dynamodb = new DynamoDB.DocumentClient()
 const sessionsTable = 'sessions'
 
+// Lambda ハンドラー
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const connectionId = event.requestContext?.connectionId
+  const teamCode = event.queryStringParameters?.team_code
+  const userId = event.queryStringParameters?.user_id
 
-  if (!connectionId) {
+  if (!teamCode || !userId) {
     return {
       statusCode: 400,
-      body: 'Missing connectionId in the request context.',
+      body: JSON.stringify({
+        error: 'Error: team_code and user_id are required.',
+      }),
     }
   }
 
-  const params = {
+  const putParams = {
     TableName: sessionsTable,
-    Key: {
+    Item: {
       connection_id: connectionId,
+      team_code: teamCode,
+      user_id: userId,
     },
   }
 
   try {
-    const target = await dynamodb.get(params).promise()
+    // 接続情報を保存
+    await dynamodb.put(putParams).promise()
 
-    // 接続情報を削除
-    await dynamodb.delete(params).promise()
-
-    // クエリ用のパラメータを設定
     const scanParams = {
       TableName: sessionsTable,
       FilterExpression: '#attribute = :value',
@@ -36,7 +40,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         '#attribute': 'team_code',
       },
       ExpressionAttributeValues: {
-        ':value': target.Item?.team_code,
+        ':value': teamCode,
       },
     }
 
@@ -46,7 +50,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (!Items || Items.length === 0) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ message: 'No active connections found.' }),
+        body: JSON.stringify({ error: 'No active connections found.' }),
       }
     }
 
@@ -55,13 +59,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       endpoint: `${event.requestContext.domainName}/${event.requestContext.stage}`,
     })
 
+    // 全接続ユーザーの情報を作成
+    const activeUserIds = Items.map((item) => item.user_id)
+
     // WebSocket 経由でメッセージを送信
-    const postPromises = Items.map(async (item) => {
+    const postPromises = Items.flatMap(async (item) => {
+      // 確実に接続の完了が保証されていないので、自身のconnection_idは除外
+      if (item.connection_id === connectionId) return Promise.resolve([])
+
       try {
-        await apiGateway
+        return apiGateway
           .postToConnection({
             ConnectionId: item.connection_id as string,
-            Data: JSON.stringify({ action: 'disconnect', targetUserId: target.Item?.user_id }),
+            Data: JSON.stringify({ action: 'connect', activeUserIds }),
           })
           .promise()
       } catch (err) {
@@ -74,14 +84,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     return {
       statusCode: 200,
-      body: 'Disconnection and session removal successful!',
+      body: JSON.stringify({ message: 'Connection successful!' }),
     }
-  } catch (error) {
-    console.error('Error:', error)
+  } catch (err) {
+    console.error('Error:', err)
 
     return {
       statusCode: 500,
-      body: 'Failed to process disconnection.',
+      body: JSON.stringify({ error: 'Failed to process connection.' }),
     }
   }
 }
