@@ -3,10 +3,12 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "build-connect": "tsc src/connect.ts --noEmit && esbuild src/connect.ts --bundle --platform=node --target=es2020 --outfile=dist/connect/index.js",
-    "zip-connect": "zip connect.zip dist/connect/index.js -j",
-    "build-disconnect": "tsc src/disconnect.ts --noEmit && esbuild src/disconnect.ts --bundle --platform=node --target=es2020 --outfile=dist/disconnect/index.js",
-    "zip-disconnect": "zip disconnect.zip dist/disconnect/index.js -j",
+    "build-connect": "tsc src/websocket/connect.ts --noEmit && esbuild src/websocket/connect.ts --bundle --platform=node --target=es2020 --outfile=dist/websocket/connect/index.js",
+    "zip-connect": "zip connect.zip dist/websocket/connect/index.js -j",
+    "build-disconnect": "tsc src/websocket/disconnect.ts --noEmit && esbuild src/websocket/disconnect.ts --bundle --platform=node --target=es2020 --outfile=dist/websocket/disconnect/index.js",
+    "zip-disconnect": "zip disconnect.zip dist/websocket/disconnect/index.js -j",
+    "build-active-users": "tsc src/rest/getActiveUsers.ts --noEmit && esbuild src/rest/getActiveUsers.ts --bundle --platform=node --target=es2020 --outfile=dist/rest/getActiveUsers/index.js",
+    "zip-active-users": "zip getActiveUsers.zip dist/rest/getActiveUsers/index.js -j",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "format": "prettier --write 'src/**/*.{ts,tsx,json,md}'"
   },
