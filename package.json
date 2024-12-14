@@ -9,6 +9,8 @@
     "zip-disconnect": "zip disconnect.zip dist/disconnect/index.js -j",
     "build-enqueue-message": "tsc src/enqueueMessage.ts --noEmit && esbuild src/enqueueMessage.ts --bundle --platform=node --target=es2020 --outfile=dist/enqueueMessage/index.js",
     "zip-enqueue-message": "zip enqueueMessage.zip dist/enqueueMessage/index.js -j",
+    "build-write-message": "tsc src/writeMessage.ts --noEmit && esbuild src/writeMessage.ts --bundle --platform=node --target=es2020 --outfile=dist/writeMessage/index.js",
+    "zip-write-message": "zip writeMessage.zip dist/writeMessage/index.js -j",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "format": "prettier --write 'src/**/*.{ts,tsx,json,md}'"
   },
